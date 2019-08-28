@@ -210,6 +210,13 @@ nav + .container {
   position: relative;
   left: 50%;
   right: 50%;
+  overflow: hidden;
+}
+
+.header-img {
+  min-width: 100%;
+  position: relative;
+  background-size: cover;
 }
 
 .row.full-width {

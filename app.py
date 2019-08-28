@@ -4,8 +4,8 @@ from flask import Flask, render_template, request, flash, redirect, session, g
 from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
-from forms import UserAddForm, LoginForm, MessageForm, EditUserForm
-from models import db, connect_db, User, Message, Follows
+from forms import UserAddForm, LoginForm, MessageForm, EditUserForm, LikeMessageForm
+from models import db, connect_db, User, Message, Follows, UserMessage
 
 CURR_USER_KEY = "curr_user"
 
@@ -23,6 +23,10 @@ app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', "it's a secret")
 toolbar = DebugToolbarExtension(app)
 
 connect_db(app)
+
+
+##############################################################################
+# helper functions
 
 
 ##############################################################################
@@ -45,13 +49,14 @@ def do_login(user):
 
     session[CURR_USER_KEY] = user.id
 
+
 @app.route('/logout')
 def do_logout():
     """Logout user."""
 
     if CURR_USER_KEY in session:
         del session[CURR_USER_KEY]
-    
+
     flash('Successfully logged out!')
     return redirect('/login')
 
@@ -218,13 +223,13 @@ def profile():
         flash("Access unauthorized.", "danger")
         return redirect("/")
 
-    form = EditUserForm()
+    form = EditUserForm(obj=g.user)
 
     if form.validate_on_submit():
         g.user.username = form.username.data
         g.user.email = form.email.data
-        g.user.image_url = form.image_url.data
-        g.user.header_image_url = form.header_image_url.data
+        g.user.image_url = form.image_url.data or User.image_url.default.arg
+        g.user.header_image_url = form.header_image_url.data or User.header_image_url.default.arg
         g.user.bio = form.bio.data
 
         user = User.authenticate(form.username.data, form.password.data)
@@ -280,12 +285,31 @@ def messages_add():
     return render_template('messages/new.html', form=form)
 
 
-@app.route('/messages/<int:message_id>', methods=["GET"])
+@app.route('/messages/<int:message_id>', methods=["GET", "POST"])
 def messages_show(message_id):
     """Show a message."""
 
-    msg = Message.query.get(message_id)
-    return render_template('messages/show.html', message=msg)
+    liked = "far fa-heart"
+    
+    form = LikeMessageForm()
+    
+    if form.validate_on_submit():
+        if message_id not in g.user.liked_messages:
+        	liked_message = UserMessage(user_liking_id=g.user.id, message_liked=message_id)
+        	db.session.add(liked_message)
+       		db.session.commit()
+			liked = "fas fa-heart"
+          	return redirect(f'/messages/{message_id}')
+     	else:
+        	unliked_message = UserMessage.query.get_or_404(message_id)
+         	db.session.delete(unliked_message)
+			db.session.commit()
+   
+			liked = "far fa-heart"
+			return redirect(f'/messages/{message_id}')
+ 	else:
+    	msg = Message.query.get(message_id)
+    	return render_template('messages/show.html', message=msg, liked=liked)
 
 
 @app.route('/messages/<int:message_id>/delete', methods=["POST"])
@@ -316,17 +340,13 @@ def homepage():
     """
 
     if g.user:
-        # messages = (Message
-        #             .query
-        #             .order_by(Message.timestamp.desc())
-        #             .limit(100)
-        #             .all())
-        following = [user.id for user in g.user.following]
+        user_ids = [user.id for user in g.user.following] + [g.user.id]
 
-        messages = Message.query.filter((Message.user_id.in_(following)) | (Message.user_id == g.user.id)).order_by(Message.timestamp.desc()).limit(100)
-        # messages2 = Message.query.filter(Message.user_id == g.user.id).order_by(Message.timestamp.desc()).limit(100)
-
-
+        messages = (Message
+                    .query
+                    .filter(Message.user_id.in_(user_ids))
+                    .order_by(Message.timestamp.desc())
+                    .limit(100))
         return render_template('home.html', messages=messages)
 
     else:
