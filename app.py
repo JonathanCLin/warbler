@@ -13,8 +13,8 @@ app = Flask(__name__)
 
 # Get DB_URI from environ variable (useful for production/testing) or,
 # if not set there, use development local db.
-app.config['SQLALCHEMY_DATABASE_URI'] = (
-    os.environ.get('DATABASE_URL', 'postgres:///warbler'))
+app.config['SQLALCHEMY_DATABASE_URI'] = (os.environ.get(
+    'DATABASE_URL', 'postgres:///warbler'))
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = False
@@ -24,10 +24,8 @@ toolbar = DebugToolbarExtension(app)
 
 connect_db(app)
 
-
 ##############################################################################
 # helper functions
-
 
 ##############################################################################
 # User signup/login/logout
@@ -104,8 +102,7 @@ def login():
     form = LoginForm()
 
     if form.validate_on_submit():
-        user = User.authenticate(form.username.data,
-                                 form.password.data)
+        user = User.authenticate(form.username.data, form.password.data)
 
         if user:
             do_login(user)
@@ -126,6 +123,7 @@ def logout():
 
 ##############################################################################
 # General user routes:
+
 
 @app.route('/users')
 def list_users():
@@ -152,12 +150,9 @@ def users_show(user_id):
 
     # snagging messages in order from the database;
     # user.messages won't be in order by default
-    messages = (Message
-                .query
-                .filter(Message.user_id == user_id)
-                .order_by(Message.timestamp.desc())
-                .limit(100)
-                .all())
+    messages = (Message.query.filter(Message.user_id == user_id).order_by(
+        Message.timestamp.desc()).limit(100).all())
+
     return render_template('users/show.html', user=user, messages=messages)
 
 
@@ -214,6 +209,7 @@ def stop_following(follow_id):
 
     return redirect(f"/users/{g.user.id}/following")
 
+
 ####
 @app.route('/users/profile', methods=["GET", "POST"])
 def profile():
@@ -259,8 +255,32 @@ def delete_user():
     return redirect("/signup")
 
 
+@app.route('/users/<int:user_id>/likes')
+def show_liked_messages(user_id):
+    """Show list of message this user likes."""
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    user = User.query.get_or_404(user_id)
+    
+    msg_ids = [UserMessage.message_liked for message in user.liked_messages]
+
+    liked_messages = (Message
+                      .query
+                      .filter(Message.id.in_(msg_ids))
+                      .order_by(Message.timestamp.desc())
+                      .limit(100))
+    
+    return render_template('/users/show.html',
+                           user=user,
+                           messages=liked_messages)
+
+
 ##############################################################################
 # Messages routes:
+
 
 @app.route('/messages/new', methods=["GET", "POST"])
 def messages_add():
@@ -289,29 +309,27 @@ def messages_add():
 def messages_show(message_id):
     """Show a message."""
 
-    liked = "far fa-heart"
     msg = Message.query.get(message_id)
 
     form = LikeMessageForm()
 
     if form.validate_on_submit():
-        if msg not in g.user.liked_messages:
-            liked_message = UserMessage(user_liking_id=g.user.id, message_liked=message_id)
+        if (msg not in g.user.liked_messages) and (msg not in g.user.messages):
+            liked_message = UserMessage(user_liking_id=g.user.id,
+                                        message_liked=message_id)
             db.session.add(liked_message)
             db.session.commit()
-            liked = "fas fa-heart"
             return redirect(f'/messages/{message_id}')
 
         else:
-            UserMessage.query.filter(msg.id == UserMessage.message_liked).delete() 
-            
-            db.session.commit()
+            UserMessage.query.filter(
+                msg.id == UserMessage.message_liked).delete()
 
-            liked = "far fa-heart"
+            db.session.commit()
             return redirect(f'/messages/{message_id}')
 
     else:
-        return render_template('messages/show.html', form=form, message=msg, liked=liked)
+        return render_template('messages/show.html', form=form, message=msg)
 
 
 @app.route('/messages/<int:message_id>/delete', methods=["POST"])
@@ -340,15 +358,31 @@ def homepage():
     - anon users: no messages
     - logged in: 100 most recent messages of followed_users
     """
-
+    
     if g.user:
         user_ids = [user.id for user in g.user.following] + [g.user.id]
 
-        messages = (Message
-                    .query
-                    .filter(Message.user_id.in_(user_ids))
-                    .order_by(Message.timestamp.desc())
-                    .limit(100))
+        messages = (Message.query.filter(
+            Message.user_id.in_(user_ids)).order_by(
+                Message.timestamp.desc()).limit(100))
+        
+        # form = LikeMessageForm()
+    
+        # if form.validate_on_submit():
+        #     if (msg not in g.user.liked_messages) and (msg not in g.user.messages):
+        #         liked_message = UserMessage(user_liking_id=g.user.id,
+        #                                     message_liked=message_id)
+        #         db.session.add(liked_message)
+        #         db.session.commit()
+        #         return redirect(f'/')
+
+        #     else:
+        #         UserMessage.query.filter(
+        #             msg.id == UserMessage.message_liked).delete()
+
+        #         db.session.commit()
+        #         return redirect(f'/')
+
         return render_template('home.html', messages=messages)
 
     else:
@@ -361,6 +395,7 @@ def homepage():
 #   handled elsewhere)
 #
 # https://stackoverflow.com/questions/34066804/disabling-caching-in-flask
+
 
 @app.after_request
 def add_header(req):

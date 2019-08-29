@@ -50,8 +50,18 @@
                   </span>
           
               </div>
-          
-              {% endfor %}<button type="submit"><i class="{{ liked }}"></i></button></form>
+              
+              {% endfor %}
+              
+
+
+              {% if message in g.user.liked_messages %}
+              <button class="btn" type="submit"><i class="fas fa-heart"></i></button></form>
+              {% else %}
+              <button class="btn" type="submit"><i class="far fa-heart"></i></button></form>
+              {% endif %}
+
+              
           </div>
         </li>
       </ul>
