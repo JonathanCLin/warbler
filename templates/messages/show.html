@@ -33,7 +33,25 @@
             </div>
             <p class="single-message">{{ message.text }}</p>
             <span class="text-muted">{{ message.timestamp.strftime('%d %B %Y') }}</span>
-            <form method="post"><button><i class="{{ liked }}"></i></button></form>
+            <form action="/messages/{{ message.id }}" method="POST">{{ form.hidden_tag() }}
+
+              {% for field in form if field.widget.input_type != 'hidden'%}
+          
+              <div class='form-group'>
+                  {{ field.label }}
+                  {{ field(class="form-control") }}
+          
+                  <span>
+                      {% if field.errors %}
+                      {% for error in field.errors %}
+                      <b class="text-danger">{{ error }}</b>
+                      {% endfor %}
+                      {% endif %}
+                  </span>
+          
+              </div>
+          
+              {% endfor %}<button type="submit"><i class="{{ liked }}"></i></button></form>
           </div>
         </li>
       </ul>

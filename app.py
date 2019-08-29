@@ -290,26 +290,28 @@ def messages_show(message_id):
     """Show a message."""
 
     liked = "far fa-heart"
-    
+    msg = Message.query.get(message_id)
+
     form = LikeMessageForm()
-    
+
     if form.validate_on_submit():
-        if message_id not in g.user.liked_messages:
-        	liked_message = UserMessage(user_liking_id=g.user.id, message_liked=message_id)
-        	db.session.add(liked_message)
-       		db.session.commit()
-			liked = "fas fa-heart"
-          	return redirect(f'/messages/{message_id}')
-     	else:
-        	unliked_message = UserMessage.query.get_or_404(message_id)
-         	db.session.delete(unliked_message)
-			db.session.commit()
-   
-			liked = "far fa-heart"
-			return redirect(f'/messages/{message_id}')
- 	else:
-    	msg = Message.query.get(message_id)
-    	return render_template('messages/show.html', message=msg, liked=liked)
+        if msg not in g.user.liked_messages:
+            liked_message = UserMessage(user_liking_id=g.user.id, message_liked=message_id)
+            db.session.add(liked_message)
+            db.session.commit()
+            liked = "fas fa-heart"
+            return redirect(f'/messages/{message_id}')
+
+        else:
+            UserMessage.query.filter(msg.id == UserMessage.message_liked).delete() 
+            
+            db.session.commit()
+
+            liked = "far fa-heart"
+            return redirect(f'/messages/{message_id}')
+
+    else:
+        return render_template('messages/show.html', form=form, message=msg, liked=liked)
 
 
 @app.route('/messages/<int:message_id>/delete', methods=["POST"])
