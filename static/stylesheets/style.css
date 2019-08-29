@@ -219,7 +219,7 @@ nav + .container {
   background-size: cover;
 }
 
-.row.full-width {
+.row.full-width
   background-color: #fff;
   margin-top: -80px;
   margin-bottom: 1rem;
@@ -273,6 +273,7 @@ nav + .container {
   left: 0;
   right: 0;
   z-index: 1;
+  height: 70%
 }
 
 #messages .list-group-item a:not(.message-link) {

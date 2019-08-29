@@ -351,7 +351,7 @@ def messages_destroy(message_id):
 # Homepage and error pages
 
 
-@app.route('/')
+@app.route('/', methods=["GET", "POST"])
 def homepage():
     """Show homepage:
 
@@ -366,24 +366,24 @@ def homepage():
             Message.user_id.in_(user_ids)).order_by(
                 Message.timestamp.desc()).limit(100))
         
-        # form = LikeMessageForm()
+        form = LikeMessageForm()
     
-        # if form.validate_on_submit():
-        #     if (msg not in g.user.liked_messages) and (msg not in g.user.messages):
-        #         liked_message = UserMessage(user_liking_id=g.user.id,
-        #                                     message_liked=message_id)
-        #         db.session.add(liked_message)
-        #         db.session.commit()
-        #         return redirect(f'/')
+        if form.validate_on_submit():
+            if (msg not in g.user.liked_messages) and (msg not in g.user.messages):
+                liked_message = UserMessage(user_liking_id=g.user.id,
+                                            message_liked=message_id)
+                db.session.add(liked_message)
+                db.session.commit()
+                return redirect(f'/')
 
-        #     else:
-        #         UserMessage.query.filter(
-        #             msg.id == UserMessage.message_liked).delete()
+            else:
+                UserMessage.query.filter(
+                    msg.id == UserMessage.message_liked).delete()
 
-        #         db.session.commit()
-        #         return redirect(f'/')
+                db.session.commit()
+                return redirect(f'/')
 
-        return render_template('home.html', messages=messages)
+        return render_template('home.html', messages=messages, form=form)
 
     else:
         return render_template('home-anon.html')

@@ -49,13 +49,35 @@
           <span class="text-muted">{{ msg.timestamp.strftime('%d %B %Y') }}</span>
           <p>{{ msg.text }}</p>
 
+        
+          <form action="/" method="POST">{{ form.hidden_tag() }}
+            
+              {% for field in form if field.widget.input_type != 'hidden'%}
 
-          {% if msg in g.user.liked_messages %}
-          <button class="btn" type="submit"><i class="fas fa-heart"></i></button></form>
-          {% else %}
-          <button class="btn" type="submit"><i class="far fa-heart"></i></button></form>
-          {% endif %}
+              <div class='form-group'>
+                {{ field.label }}
+                {{ field(class="form-control") }}
 
+                <span>
+                  {% if field.errors %}
+                  {% for error in field.errors %}
+                  <b class="text-danger">{{ error }}</b>
+                  {% endfor %}
+                  {% endif %}
+                </span>
+
+              </div>
+
+              {% endfor %}
+
+
+
+              {% if msg in g.user.liked_messages %}
+              <button class="btn" type="submit"><i class="fas fa-heart"></i></button></form>
+            {% else %}
+            <button class="btn" type="submit"><i class="far fa-heart"></i></button></form>
+            {% endif %}
+        
         </div>
       </li>
       {% endfor %}
