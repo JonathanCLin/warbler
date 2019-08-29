@@ -50,31 +50,19 @@
           <p>{{ msg.text }}</p>
 
         
-          <form action="/" method="POST">{{ form.hidden_tag() }}
+          <form action="/users/{{ msg.id }}/likes" method="POST">
             
-              {% for field in form if field.widget.input_type != 'hidden'%}
-
-              <div class='form-group'>
-                {{ field.label }}
-                {{ field(class="form-control") }}
-
-                <span>
-                  {% if field.errors %}
-                  {% for error in field.errors %}
-                  <b class="text-danger">{{ error }}</b>
-                  {% endfor %}
-                  {% endif %}
-                </span>
-
-              </div>
-
-              {% endfor %}
+            {{ form.hidden_tag() }}
+            
+              
 
 
 
               {% if msg in g.user.liked_messages %}
+              
               <button class="btn" type="submit"><i class="fas fa-heart"></i></button></form>
             {% else %}
+            
             <button class="btn" type="submit"><i class="far fa-heart"></i></button></form>
             {% endif %}
         

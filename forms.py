@@ -35,6 +35,7 @@ class EditUserForm(FlaskForm):
     bio = StringField('Bio')
     password = PasswordField('Password', validators=[DataRequired(), Length(min=6)])
 
+
 class LikeMessageForm(FlaskForm):
     """form to like message"""
     

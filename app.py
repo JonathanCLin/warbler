@@ -277,6 +277,30 @@ def show_liked_messages(user_id):
                            user=user,
                            messages=liked_messages)
 
+@app.route('/users/<int:msg_id>/likes', methods=["POST"])
+def handle_message_like(msg_id):
+
+    form = LikeMessageForm()
+
+    msg = Message.query.get(msg_id)
+
+    if form.validate_on_submit():
+        if (msg not in g.user.liked_messages) and (msg not in g.user.messages):
+            liked_message = UserMessage(user_liking_id=g.user.id,
+                                        message_liked=msg_id)
+            db.session.add(liked_message)
+            db.session.commit()
+            
+        else:
+            UserMessage.query.filter(
+                msg.id == UserMessage.message_liked).delete()
+
+            db.session.commit()
+
+    return redirect('/')
+
+
+
 
 ##############################################################################
 # Messages routes:
@@ -358,6 +382,8 @@ def homepage():
     - anon users: no messages
     - logged in: 100 most recent messages of followed_users
     """
+
+    form = LikeMessageForm()
     
     if g.user:
         user_ids = [user.id for user in g.user.following] + [g.user.id]
@@ -365,23 +391,6 @@ def homepage():
         messages = (Message.query.filter(
             Message.user_id.in_(user_ids)).order_by(
                 Message.timestamp.desc()).limit(100))
-        
-        form = LikeMessageForm()
-    
-        if form.validate_on_submit():
-            if (msg not in g.user.liked_messages) and (msg not in g.user.messages):
-                liked_message = UserMessage(user_liking_id=g.user.id,
-                                            message_liked=message_id)
-                db.session.add(liked_message)
-                db.session.commit()
-                return redirect(f'/')
-
-            else:
-                UserMessage.query.filter(
-                    msg.id == UserMessage.message_liked).delete()
-
-                db.session.commit()
-                return redirect(f'/')
 
         return render_template('home.html', messages=messages, form=form)
 
