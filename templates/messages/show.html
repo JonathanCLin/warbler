@@ -33,16 +33,15 @@
             </div>
             <p class="single-message">{{ message.text }}</p>
             <span class="text-muted">{{ message.timestamp.strftime('%d %B %Y') }}</span>
-            
-            <form action="/users/{{ message.id }}/likes" method="POST">{{ form.hidden_tag() }}
+          
 
               
 
 
               {% if message in g.user.liked_messages %}
-              <button class="btn" type="submit"><i class="fas fa-heart"></i></button></form>
+              <button class="btn" type="submit"><i class="fas fa-heart"></i></button>
               {% else %}
-              <button class="btn" type="submit"><i class="far fa-heart"></i></button></form>
+              <button class="btn" type="submit"><i class="far fa-heart"></i></button>
               {% endif %}
 
               
