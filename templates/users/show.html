@@ -19,11 +19,16 @@
 
 
 
-        {% if message in g.user.liked_messages %}
-        <button class="btn" type="submit"><i class="fas fa-heart"></i></button></form>
-        {% else %}
-        <button class="btn" type="submit"><i class="far fa-heart"></i></button></form>
-        {% endif %}
+        <form action="/users/{{ message.id }}/likes" method="POST">{{ form.hidden_tag() }}
+
+              
+
+
+          {% if message in g.user.liked_messages %}
+          <button class="btn" type="submit"><i class="fas fa-heart"></i></button></form>
+          {% else %}
+          <button class="btn" type="submit"><i class="far fa-heart"></i></button></form>
+          {% endif %}
       </div>
     </li>
 
